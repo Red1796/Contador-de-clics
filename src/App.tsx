@@ -1,10 +1,16 @@
 import React, { useState, useEffect } from "react";
 
-function Alert({ type = "info", message, onClose }) {
+interface AlertProps {
+  type?: "info" | "success" | "warn" | "error";
+  message: string;
+  onClose: () => void;
+}
+
+function Alert({ type = "info", message, onClose }: AlertProps) {
   if (!message) return null;
 
   const base = "p-3 rounded-md mb-4 shadow-sm flex items-start gap-3";
-  const styles = {
+  const styles: Record<string, string> = {
     info: "bg-blue-50 text-blue-700",
     success: "bg-green-50 text-green-700",
     warn: "bg-yellow-50 text-yellow-800",
@@ -25,22 +31,36 @@ function Alert({ type = "info", message, onClose }) {
 }
 
 export default function App() {
-  const [count, setCount] = useState(() => {
+  const [count, setCount] = useState<number>(() => {
     const saved = localStorage.getItem("contador");
     return saved ? Number(saved) : 0;
   });
 
-  const [alert, setAlert] = useState({ type: "", message: "" });
+  const [alert, setAlert] = useState<{ type: string; message: string }>({
+    type: "",
+    message: "",
+  });
+
+  const [isBouncing, setIsBouncing] = useState(false);
+
 
   useEffect(() => {
-    localStorage.setItem("contador", count);
+    localStorage.setItem("contador", count.toString());
   }, [count]);
 
-  function showAlert(type, message, timeout = 2000) {
+  useEffect(() => {
+  if (count >= 0) {
+    setIsBouncing(true);
+
+    const timer = setTimeout(() => setIsBouncing(false), 250); // 0.25s = duración de tu animación
+    return () => clearTimeout(timer);
+  }
+}, [count]);
+
+
+  function showAlert(type: "info" | "success" | "warn" | "error", message: string, timeout = 2000) {
     setAlert({ type, message });
-    if (timeout) {
-      setTimeout(() => setAlert({ type: "", message: "" }), timeout);
-    }
+    if (timeout) setTimeout(() => setAlert({ type: "", message: "" }), timeout);
   }
 
   function incrementar() {
@@ -74,25 +94,19 @@ export default function App() {
           Contador de Clics
         </h1>
 
-        {/* Alertas */}
         <Alert
-          type={alert.type}
+          type={alert.type as any}
           message={alert.message}
           onClose={() => setAlert({ type: "", message: "" })}
         />
 
-        {/* Numero del contador */}
         <div className="text-center mb-6">
           <p className="text-sm text-gray-600">Numero actual del contador:</p>
-            <p
-              key={count} 
-              className="text-6xl font-bold bounce-once"
-            >
+            <p className={`text-6xl font-bold ${isBouncing ? "bounce-once" : ""}`}>
               {count}
             </p>
         </div>
 
-        {/* Botones */}
         <div className="flex justify-center gap-4">
           <button
             onClick={decrementar}
